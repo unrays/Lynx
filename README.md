@@ -49,7 +49,17 @@ int main() {
 #define OFF 0
 #define ON 1
 
-#define ENABLE_ALIAS OFF
+#define ENABLE_ALIAS ON
+
+#define GENERATE_HAS_FUNCTION_TRAIT(function_name)               \
+    template <typename T, typename = void>                       \
+    struct has_function_##function_name : std::false_type {};    \
+                                                                 \
+    template <typename T>                                        \
+    struct has_function_##function_name<                         \
+        T,                                                       \
+        std::void_t<decltype(std::declval<T>().function_name())> \
+    > : std::true_type {};                                       \
 
 struct End {
     template<typename FinalState>
@@ -129,25 +139,46 @@ struct OperatorTraits<
 
 /********************************************/
 
+GENERATE_HAS_FUNCTION_TRAIT(onOperated); //manque params
+
+/********************************************/
+
+template<typename>
+struct FunctionOperatorBase;
+
 template<
-    std::size_t Arity, // = 0; variadic supporte 0
+    template<std::size_t, typename, typename> class DerivedOperator,
+    std::size_t Arity,
+    typename Next,
+    typename State
+>
+struct FunctionOperatorBase<DerivedOperator<Arity, Next, State>> {
+    using Derived_t = DerivedOperator<Arity, Next, State>;
+
+    template<typename... Args>
+    auto operator()(Args&&... args) 
+        -> std::enable_if_t<
+              (Arity == 0 || sizeof...(Args) == Arity) &&
+              has_function_onOperated<Derived_t>::value //ici faut mettre params trait
+        >
+    {
+        return static_cast<Derived_t*>(this)
+            ->onOperated(std::forward<Args>(args)...);
+    }
+};
+
+template<
+    std::size_t Arity,
     typename Next,
     typename CurrentState
 >
 struct FunctionOperator_:
-    StatefulOperator<CurrentState>,
-    OperatorTraits<FunctionOperator_<Arity, Next, CurrentState>>
+    FunctionOperatorBase<FunctionOperator_<Arity, Next, CurrentState>>,
+    OperatorTraits<FunctionOperator_<Arity, Next, CurrentState>>,
+    StatefulOperator<CurrentState>
 {
-    template<
-        typename... Args,
-        std::size_t Args_arity = sizeof...(Args),
-
-        typename = std::enable_if_t<
-            Arity == 0 ||
-            Args_arity == Arity
-        >
-    >
-    auto operator()(Args&&... args) {
+    template<typename... Args>
+    auto onOperated(Args&&... args) noexcept(false) {
         auto concat_state_args = std::tuple_cat(
             this->state_,
             std::make_tuple(
