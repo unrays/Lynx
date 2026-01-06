@@ -223,4 +223,3 @@ Planned features and improvements for future releases:
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 <p align="center"><sub>© Félix-Olivier Dumas 2026</sub></p>
-```
