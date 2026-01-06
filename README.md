@@ -31,6 +31,8 @@ Originally, my plan was to implement a fluent design system for the front end of
 The main problem with chaining compile-time operators is that it's difficult to extract information from the next node and adapt that node to the conditions of the previous one if everything is compiled-time.  
 The solution, using template and `using` statements, allows me to model and recreate subsequent nodes from scratch with their original attributes, but adding the types and information of the current node, such as the data container or size constraints, for example.
 
+This project is the culmination of my journey learning metaprogramming in C++, which I naively began a little less than two months ago. This is my first library ever, and I'm sure there are many things that can be improved. Feel free to share your suggestions!
+
 ---
 
 ## Installation
