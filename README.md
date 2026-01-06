@@ -1,147 +1,118 @@
-I'll probably add something here, but know that I worked incredibly hard on this little bit of code; in fact, I had to start from scratch at least seven times. I finally found the solution to all my problems: recreating the `next` statement of the chain using `using`, which allows me to make my links dynamic while maintaining 100% compile time. ;) I'm very proud of this result! Maybe I'll work on embellishing it as a library...?! Who knows!
+# Operator
 
-*Also, this is my first project of 2026!*
-
-I've learned so much since I started meta-programming just a month and three weeks ago! I'm really starting to see significant progress and I'm also beginning to tackle challenges that I'm increasingly passionate about! I can't wait to see what the future holds ;)
-
-*This is definitely not finished yet, I still have many more ideas to implement.*
+> Operator is a C++ compile-time meta programming library for building composable operator pipelines. This library is intended for developers wishing to create their own DSL using ultra-high-performance, fully compile-time and type-safe operator pipelines.
 
 ---
 
-#### Output
-```console
-*********** END ***********
-class std::tuple<double,int,double>
-50
-25
-45.3
-------
-class std::tuple<int>
-3
-------
-class std::tuple<double,char const * __ptr64>
-25.6
-d
-------
-***************************
+## Table of Contents
+1. [Motivation](#motivation)
+2. [Installation](#installation)
+    - [Requirements](#requirements)
+    - [Include](#include)
+3. [Usage](#usage)
+    - [Step 1: Create a pipeline](#step-1-create-a-pipeline)
+    - [Step 2: Execute the pipeline](#step-2-execute-the-pipeline)
+    - [Step 3: End the pipeline](#step-3-end-the-pipeline)
+4. [Examples](#examples)
+    - [Example 1: Specify the size of arguments](#example-1-specify-the-size-of-arguments)
+    - [Example 2: Implement your own operator](#example-2-implement-your-own-operator)
+        - [Base provided by the API](#base-provided-by-the-api)
+        - [Implementation using this base](#implementation-using-this-base)
+5. [Contributing](#contributing)
+6. [Roadmap](#roadmap)
+7. [License](#license)
+
+
+---
+
+## Motivation
+Originally, my plan was to implement a fluent design in my ECS to clarify the interactions with my personal ECS. I then got to work and began developing a small, entirely compile-time system. Gradually, this small side project transformed into a full-fledged project, which itself evolved into a library. The main problem with chaining compile-time operators is that it's difficult to extract information from the next node and adapt that node to the conditions of the previous one if everything is compiled-time. The solution, using template and `using` statements, allows me to model and recreate subsequent nodes from scratch with their original attributes, but adding the types and information of the current node, such as the data container or size constraints, for example.
+
+---
+
+## Installation
+Instructions on how to install, include, or build the library.
+
+### Requirements
+- **C++ Standard:** C++11 up to C++26
+- **Compilers:** GCC 11+, Clang 13+, MSVC 2019+ (any compiler supporting C++11 to C++26).  
+- **Dependencies:** Only the C++ standard library (`<tuple>`, `<type_traits>`, `<concepts>`, `<utility>`, `<iostream>`). No external dependencies.
+
+### Include
+This library is **header-only**, so you just need to include the main header in your project:
+
+```cpp
+#include "operator.h"
+using namespace v6;
 ```
 
-#### Main
+---
+
+
+## Usage
+
+Basic usage of the library involves creating operator chains and terminating them with `Result` or your own implementation.
+
+### Step 1: Create a pipeline
 ```cpp
-int main() {
-  using Pipeline =
-     FunctionOperator<
-       SubscriptOperator<
-         FunctionOperator<>
-  >>;
-  
-  Pipeline pipeline({});
-  
-  pipeline(50, 25, 45.3)[3](25.6, "d");
-}
+#include "operator.h"
+using namespace v6;
+
+// Create a FunctionOperator pipeline
+auto pipeline = FunctionOperator<SubscriptOperator<>>{};
+
+// Equivalent explicit template version specifying arity, state, and next operator
+auto pipeline = FunctionOperator<0, std::tuple<>, SubscriptOperator<0, std::tuple<>, End>>{};
 ```
 
-#### Code
+### Step 2: Execute the pipeline
 ```cpp
-// Copyright (c) January 2026 Félix-Olivier Dumas. All rights reserved.
-// Licensed under the terms described in the LICENSE file
+#include "operator.h"
+using namespace v6;
 
-#define OFF 0
-#define ON 1
+// Provide some arguments; the pipeline collects them internally
+pipeline(0, 250, 500)[750, 1000];
+```
 
-#define ENABLE_ALIAS ON
+### Step 3: End the pipeline
+```cpp
+#include "operator.h"
+using namespace v6;
 
-#define GENERATE_HAS_FUNCTION_TRAIT(function_name)               \
-    template <typename T, typename = void>                       \
-    struct has_function_##function_name : std::false_type {};    \
-                                                                 \
-    template <typename T>                                        \
-    struct has_function_##function_name<                         \
-        T,                                                       \
-        std::void_t<decltype(std::declval<T>().function_name())> \
-    > : std::true_type {};                                       \
+// Automatically terminates when pipeline reaches End
+auto final_state = pipeline(10, 20)[30, 40, 50]; // returns collected arguments
+```
 
-struct End {
-    template<typename FinalState>
-    End(FinalState& s) {
-        // SEUL ELEMENT RUNTIME DU SYSTÈME COMPLET ;)
+---
 
-        std::cout << "*********** END ***********\n";
+## Examples
 
-        std::apply([&](auto&&... op_tuples) {
+### Example 1: Specify the size of arguments
 
-            ((std::apply([&](auto&&... args) {
-                std::cout << typeid(op_tuples).name() << "\n";
-                ((std::cout << args << "\n"), ...);
-                std::cout << "------\n";
-                }, op_tuples)), ...);
-            }, s);
+```cpp
+#include "operator.h"
+using namespace v6;
 
-        std::cout << "***************************\n\n";
-    }
+auto pipeline = SubscriptOperator<3,
+                    FunctionOperator<5,
+                        SubscriptOperator<> // 0 = no constraints by default
+                    >
+                >{};
 
-    void end() {
-        std::cout << "Operator chain ended!\n";
-    }
+pipeline[0, 10, 20](30, 40, 50, 60, 70)[80]; // Compiles
 
-    void get() {
+pipeline[0, 10](20, 30, 40)[50]; // Doesn't compile
+```
 
-    }
-};
+---
 
-template<typename T>
-struct is_terminal : std::false_type {};
+### Example 2: Implement your own operator
 
-template<>
-struct is_terminal<End> : std::true_type {};
+#### Base provided by the API
 
-/********************************************/
-
-struct MetaOperator {}; //metaoperator?
-
-/********************************************/
-
-struct StatelessOperator : MetaOperator {};
-
-/********************************************/
-
-template<typename CurrentState>
-struct StatefulOperator : MetaOperator {
-public:
-    StatefulOperator() = default;
-    StatefulOperator(CurrentState s) : state_(std::move(s)) {}
-
-protected:
-    CurrentState state_;
-};
-
-/********************************************/
-
-template<typename Operator>
-struct OperatorTraits : MetaOperator {};
-
-template<
-    template<std::size_t, typename, typename> class Operator,
-    std::size_t Arity,
-    typename Next,
-    typename State
->
-struct OperatorTraits<
-    Operator<Arity, Next, State>
-> : MetaOperator
-{
-    template<std::size_t T1, typename T2, typename T3>
-    using template_type = Operator<T1, T2, T3>;
-
-    static constexpr std::size_t arity = Arity;
-    using next_type = Next;
-};
-
-/********************************************/
-
-GENERATE_HAS_FUNCTION_TRAIT(onOperated); //manque params
-
-/********************************************/
+```cpp
+#include "operator.h"
+using namespace v6;
 
 template<typename>
 struct FunctionOperatorBase;
@@ -158,25 +129,37 @@ struct FunctionOperatorBase<DerivedOperator<Arity, Next, State>> {
     template<typename... Args>
     auto operator()(Args&&... args) 
         -> std::enable_if_t<
-              (Arity == 0 || sizeof...(Args) == Arity) &&
-              has_function_onOperated<Derived_t>::value //ici faut mettre params trait
+            (Arity == 0 || sizeof...(Args) == Arity),
+            decltype(std::declval<Derived_t>().onOperated(std::forward<Args>(args)...))
         >
     {
         return static_cast<Derived_t*>(this)
             ->onOperated(std::forward<Args>(args)...);
     }
 };
+  ```
+
+---
+
+#### Implementation using this base
+
+```cpp
+#include "operator.h"
+using namespace v6;
 
 template<
     std::size_t Arity,
     typename Next,
     typename CurrentState
 >
-struct FunctionOperator_:
-    FunctionOperatorBase<FunctionOperator_<Arity, Next, CurrentState>>,
+struct FunctionOperator_ :
     OperatorTraits<FunctionOperator_<Arity, Next, CurrentState>>,
+    FunctionOperatorBase<FunctionOperator_<Arity, Next, CurrentState>>,
     StatefulOperator<CurrentState>
 {
+    FunctionOperator_(CurrentState s = DEFAULT_STATE_VALUE)
+        : StatefulOperator<CurrentState>(std::move(s)) {}
+
     template<typename... Args>
     auto onOperated(Args&&... args) noexcept(false) {
         auto concat_state_args = std::tuple_cat(
@@ -196,114 +179,39 @@ struct FunctionOperator_:
             > (std::move(concat_state_args));
     }
 };
-
-/********************************************/
-
-template<
-    std::size_t Arity,
-    typename Next,
-    typename CurrentState
->
-struct SubscriptOperator_ :
-    StatefulOperator<CurrentState>,
-    OperatorTraits<SubscriptOperator_<Arity, Next, CurrentState>>
-{
-    template<
-        typename ...Args,
-        std::size_t Args_arity = sizeof...(Args),
-
-        typename = std::enable_if_t<
-        Arity == 0 ||
-        Args_arity == Arity
-        >
-    >
-    auto operator[](Args&&... arg) {
-        auto concat_state_args = std::tuple_cat(
-            this->state_,
-            std::make_tuple(
-                std::make_tuple(std::move(arg))
-            )
-        );
-
-        if constexpr (is_terminal<Next>::value)
-            return End{ concat_state_args };
-        else
-            return Next::template template_type<
-                Next::arity,
-                typename Next::next_type,
-                decltype(concat_state_args)
-            > (std::move(concat_state_args));
-    }
-
-    template<typename Arg> // pre-C++23
-    auto operator[](Arg arg) {
-        auto concat_state_args = std::tuple_cat(
-            this->state_,
-            std::make_tuple(
-                std::make_tuple(std::move(arg))
-            )
-        );
-
-        if constexpr (is_terminal<Next>::value)
-            return End{ concat_state_args };
-        else
-            return Next::template template_type<
-                Next::arity,
-                typename Next::next_type,
-                decltype(concat_state_args)
-            > (std::move(concat_state_args));
-    }
-};
-
-
-/********************************************/
- // MACRO MACRO MACRO MACRO MACRO MACRO MACRO!!!!
-
-static constexpr std::size_t DEFAULT_ARITY_VALUE = 0;
-using DEFAULT_NEXT_TYPE = End;
-using DEFAULT_STATE_TYPE = std::tuple<>;
-
-/********************************************/
-
-template<
-    std::size_t Arity = DEFAULT_ARITY_VALUE,
-    typename Next = DEFAULT_NEXT_TYPE,
-    typename State = DEFAULT_STATE_TYPE
->
-struct FunctionOperator_n : FunctionOperator_<Arity, Next, State> {};
-
-template<
-    typename Next = DEFAULT_NEXT_TYPE,
-    typename State = DEFAULT_STATE_TYPE
->
-struct FunctionOperator : FunctionOperator_<DEFAULT_ARITY_VALUE, Next, State> {};
-
-/********************************************/
-
-template<
-    std::size_t Arity = DEFAULT_ARITY_VALUE,
-    typename Next = DEFAULT_NEXT_TYPE,
-    typename State = DEFAULT_STATE_TYPE
->
-struct SubscriptOperator_n : SubscriptOperator_<Arity, Next, State> {};
-
-template<
-    typename Next = DEFAULT_NEXT_TYPE,
-    typename State = DEFAULT_STATE_TYPE
->
-struct SubscriptOperator : SubscriptOperator_<DEFAULT_ARITY_VALUE, Next, State> {};
-
-/********************************************/
-
-#if ENABLE_ALIAS
-    using DEFAULT_NEXT_TYPE = End;
-    using DEFAULT_STATE_TYPE = std::tuple<>;
-
-#define GENERATE_ALIAS(alias_name, backend_name) \
-    template<typename N=DEFAULT_NEXT_TYPE, typename S=DEFAULT_STATE_TYPE> \
-    using alias_name = backend_name<N,S>;
-
-    GENERATE_ALIAS(FunctionOperator, FunctionOperator_);
-    GENERATE_ALIAS(SubscriptOperator, SubscriptOperator_);
-#endif
 ```
+
+## Contributing
+
+Contributions are welcome! You can help by:
+
+- Reporting bugs or issues
+- Suggesting new features or improvements
+- Submitting pull requests with fixes or new functionality
+
+Please follow these guidelines:
+
+1. Fork the repository
+2. Create a new branch for your feature or bug fix
+3. Make your changes and write tests if applicable
+4. Submit a pull request describing your changes
+
+---
+
+## Roadmap
+
+Planned features and improvements for future releases:
+
+- [ ] Add support for additional operator types
+- [ ] Improve compile-time diagnostics and error messages
+- [ ] Extend examples and documentation
+
+This roadmap may evolve as the library grows.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+<p align="center"><sub>© Félix-Olivier Dumas 2026</sub></p>
