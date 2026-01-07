@@ -1,4 +1,4 @@
-# Operator
+# Operator (probably Linkly)
 
 > Operator is a C++ compile-time meta programming library for building composable operator pipelines.  
 > This library is intended for developers wishing to create their own DSL using ultra-high-performance, fully compile-time and type-safe operator pipelines.
