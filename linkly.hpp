@@ -3,7 +3,8 @@
 
 // My first library ever, I'm really proud of it ;)
 
-#pragma once
+#ifndef LINKLY_H
+#define LINKLY_H
 
 #include <tuple>
 #include <type_traits>
@@ -385,3 +386,5 @@ inline namespace alias {
     LINKLY_GENERATE_OPERATOR_ALIAS(PipeOperator, PipeOperator_);
 }
 }
+
+#endif // LINKLY_H
