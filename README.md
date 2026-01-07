@@ -88,7 +88,7 @@ pipeline(0, 250, 500)[750, 1000];
 using namespace linkly;
 
 // Automatically terminates when pipeline reaches End
-auto final_state = pipeline(10, 20)[30, 40, 50]; // returns collected arguments
+auto final_state = pipeline(10, 20)[30, 40, 50]; // returns collected arguments (tuple by default)
 ```
 
 ---
@@ -134,7 +134,7 @@ struct FunctionOperatorBase<DerivedOperator<Arity, Next, State>> {
     using Derived_t = DerivedOperator<Arity, Next, State>;
 
     template<typename... Args>
-    auto operator()(Args&&... args) 
+    auto operator()(Args&&... args)
         -> std::enable_if_t<
             (Arity == 0 || sizeof...(Args) == Arity),
             decltype(std::declval<Derived_t>().onOperated(std::forward<Args>(args)...))
@@ -164,20 +164,23 @@ struct FunctionOperator_ :
     FunctionOperatorBase<FunctionOperator_<Arity, Next, CurrentState>>,
     StatefulOperator<CurrentState>
 {
-    FunctionOperator_(CurrentState s = DEFAULT_STATE_VALUE)
-        : StatefulOperator<CurrentState>(std::move(s)) {}
+    using StatefulOperator<CurrentState>::StatefulOperator;
+    friend FunctionOperatorBase<FunctionOperator_<Arity, Next, CurrentState>>;
 
+private:
     template<typename... Args>
     auto onOperated(Args&&... args) noexcept(false) {
         auto concat_state_args = std::tuple_cat(
             this->state_,
-            std::make_tuple(
-                std::make_tuple(std::forward<Args>(args)...)
-            )
+            std::make_tuple(std::make_tuple(std::forward<Args>(args)...))
         );
 
-        if constexpr (is_terminal<Next>::value)
-            return End{ concat_state_args };
+        if constexpr (is_end_operator<Next>::value) {
+            if constexpr (has_onOperated_dummy<Next>::value)
+                return Next{ concat_state_args };
+            else
+                return concat_state_args;
+        }
         else
             return Next::template template_type<
                 Next::arity,
