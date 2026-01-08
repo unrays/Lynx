@@ -171,7 +171,7 @@ private:
     template<typename... Args>
     auto onOperated(Args&&... args) { // hooked function called when the base operator is called.
 
-        // Adding the arguments to the current state using std::tuple_cat()
+        // Adds the arguments to the current state using std::tuple_cat()
         auto concat_state_args = std::tuple_cat(
             this->state_,
             std::make_tuple(std::make_tuple(std::forward<Args>(args)...))
