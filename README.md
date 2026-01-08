@@ -148,7 +148,7 @@ struct FunctionOperatorBase<DerivedOperator<Arity, Next, State>> {
 
 ---
 
-#### Implementation using this base
+#### Example of implementation using this base
 
 ```cpp
 #include "linkly.hpp"
