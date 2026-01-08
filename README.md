@@ -170,7 +170,6 @@ struct EntityIndexerOperator_:
 private:
     template<typename... Args>
     auto onOperated(Args&&... args) { // hooked function called when the base operator is called.
-
         // Adds the arguments to the current state using std::tuple_cat()
         auto concat_state_args = std::tuple_cat(
             this->state_,
@@ -190,7 +189,6 @@ private:
                                  // In this case, we want the number of components to be equal to the number of entities
 
                 typename Next::next_type, // Uses the same typename Next as normal, no change here
-
 
                 decltype(concat_state_args) // Resolves the type of the current state and sends it
                                             // This allows the next node to store the tuple as a member
