@@ -159,7 +159,7 @@ template<
     typename Next, // Represents the subsequent structure type
     typename CurrentState // Type of the stored state
 >
-struct EntityIndexerOperator_:
+struct EntityIndexerOperator_: //Operator used for an ECS, for example: insert[entity](component)
     OperatorTraits<EntityIndexerOperator_<Arity, Next, CurrentState>>, // Allows for type introspection 
     SubscriptOperatorBase<EntityIndexerOperator_<Arity, Next, CurrentState>>, // Crtp base for generic operator attributes
     StatefulOperator<CurrentState> // Allows support for State by providing constructor, storage, etc...
