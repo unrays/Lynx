@@ -217,6 +217,7 @@ Planned features and improvements for future releases:
 * [ ] Add support for additional operator types
 * [ ] Improve compile-time diagnostics and error messages
 * [ ] Extend examples and documentation
+* [ ] Fix SFINAE to support C++17 and prior
 
 > This roadmap may evolve as the library grows.
 
