@@ -45,8 +45,9 @@ This project is the culmination of my journey learning metaprogramming in C++, w
 Instructions on how to install, include, or build the library.
 
 ### Requirements
-- **C++ Standard:** C++11 up to C++26  
-- **Compilers:** GCC 11+, Clang 13+, MSVC 2019+ (any compiler supporting C++11 to C++26)  
+- **C++ Standard:** C++17 or later  
+- **Compilers:** GCC 9+, Clang 10+, MSVC 2019+ (any compiler supporting C++11 to C++26)
+
 - **Dependencies:** Only the C++ standard library (`<tuple>`, `<type_traits>`, `<concepts>`, `<utility>`, `<iostream>`). No external dependencies.
 
 ### Include
@@ -235,7 +236,6 @@ Planned features and improvements for future releases:
 * [ ] Improve compile-time diagnostics and error messages
 * [ ] Extend examples and documentation
 * [ ] Fix SFINAE to support C++17 and prior
-* [ ] Change the name for Lynx
 
 > This roadmap may evolve as the library grows.
 
