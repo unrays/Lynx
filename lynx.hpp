@@ -1,19 +1,44 @@
-// Copyright (c) January 2026 Félix-Olivier Dumas. All rights reserved.
-// Licensed under the terms described in the LICENSE file
+/*********************************************************************
+ * EXOTIC.lynx - Header-only C++ compile-time pipeline library
+ *
+ * Copyright (c) 2026 Félix-Olivier Dumas
+ * All rights reserved.
+ *
+ * Licensed under the Boost Software License, Version 1.0.
+ * You may obtain a copy of the License at:
+ *     https://www.boost.org/LICENSE_1_0.txt
+ *
+ * Description:
+ *     Provides facilities for building composable, type-safe operator
+ *     pipelines entirely at compile time. Intended for constructing
+ *     domain-specific languages (DSLs) using template metaprogramming.
+ *
+ * This file is part of the EXOTIC collection, a set of modern,
+ * header-only C++ libraries focused on compile-time abstractions.
+ *
+ * Note:
+ *     This is my first library ever, it might not be perfect but
+ *     I'm really really proud of it ;)
+ *
+ * For more information, visit: https://github.com/unrays/Lynx
+ *
+ * Author: Félix-Olivier Dumas
+ * Version: 1.1.0
+ * Last Updated: 17 January 2026
+ *********************************************************************/
 
-// My first library ever, I'm really proud of it ;)
-
-#ifndef LINKLY_H
-#define LINKLY_H
+#ifndef EXOTIC_LYNX_H
+#define EXOTIC_LYNX_H
 
 #include <tuple>
 #include <type_traits>
 #include <utility>
 #include <iostream>
 
-namespace linkly {
+namespace EXOTIC {
+namespace lynx {
 /********************************************/
-/*                  DEFINES                  */
+/*                  DEFINES                 */
 /********************************************/
 #define OFF 0
 #define ON 1
@@ -23,7 +48,7 @@ namespace linkly {
 /********************************************/
 /*        GENERATE HAS FUNCTION MACROS      */
 /********************************************/
-#define LINKLY_GENERATE_HAS_FUNCTION_TRAIT(function_name)        \
+#define LYNX_GENERATE_HAS_FUNCTION_TRAIT(function_name)          \
     template <typename T, typename = void>                       \
     struct has_function_##function_name : std::false_type {};    \
                                                                  \
@@ -33,7 +58,7 @@ namespace linkly {
         std::void_t<decltype(std::declval<T>().function_name())> \
     > : std::true_type {};
 
-#define LINKLY_GENERATE_HAS_FUNCTION_DEF(function_name)                             \
+#define LYNX_GENERATE_HAS_FUNCTION_DEF(function_name)                               \
     template<typename, typename = void>                                             \
     struct has_##function_name : std::false_type {};                                \
                                                                                     \
@@ -55,7 +80,7 @@ namespace linkly {
 /********************************************/
 /*        HAS FUNCTION INSTANCES            */
 /********************************************/
-LINKLY_GENERATE_HAS_FUNCTION_DEF(onOperated)
+LYNX_GENERATE_HAS_FUNCTION_DEF(onOperated)
 
 /********************************************/
 /*               END OPERATORS              */
@@ -176,7 +201,7 @@ struct PipeOperator_:
 
 private:
     template<typename T>
-    auto onOperated(T&& arg) noexcept(false) {
+    auto onOperated(T&& arg) {
         auto concat_state_args = std::tuple_cat(
             this->state_,
             std::make_tuple(std::make_tuple(std::forward<T>(arg)))
@@ -242,7 +267,7 @@ struct FunctionOperator_ :
 
 private:
     template<typename... Args>
-    auto onOperated(Args&&... args) noexcept(false) {
+    auto onOperated(Args&&... args) {
         auto concat_state_args = std::tuple_cat(
             this->state_,
             std::make_tuple(std::make_tuple(std::forward<Args>(args)...))
@@ -315,7 +340,7 @@ struct SubscriptOperator_ :
 private:
 #if __cplusplus >= 202302L
     template<typename... Args>
-    auto onOperated(Args&&... args) noexcept(false) {
+    auto onOperated(Args&&... args) {
         auto concat_state_args = std::tuple_cat(
             this->state_,
             std::make_tuple(std::make_tuple(std::forward<Args>(args)...))
@@ -338,7 +363,7 @@ private:
 
 private:
     template<typename T>
-    auto onOperated(T arg) noexcept(false) {
+    auto onOperated(T arg) {
         auto concat_state_args = std::tuple_cat(
             this->state_,
             std::make_tuple(std::make_tuple(std::move(arg)))
@@ -367,7 +392,7 @@ private:
     using DEFAULT_NEXT_TYPE = EmptyEndOperator;
     using DEFAULT_STATE_TYPE = std::tuple<>;
 
-    #define LINKLY_GENERATE_OPERATOR_ALIAS(alias_name, backend_name)                   \
+    #define LYNX_GENERATE_OPERATOR_ALIAS(alias_name, backend_name)              \
         template<                                                               \
             std::size_t Arity = DEFAULT_ARITY_VALUE,                            \
             typename Next = DEFAULT_NEXT_TYPE,                                  \
@@ -383,10 +408,11 @@ private:
 #endif
 
 inline namespace alias {
-    LINKLY_GENERATE_OPERATOR_ALIAS(FunctionOperator, FunctionOperator_);
-    LINKLY_GENERATE_OPERATOR_ALIAS(SubscriptOperator, SubscriptOperator_);
-    LINKLY_GENERATE_OPERATOR_ALIAS(PipeOperator, PipeOperator_);
+    LYNX_GENERATE_OPERATOR_ALIAS(FunctionOperator, FunctionOperator_);
+    LYNX_GENERATE_OPERATOR_ALIAS(SubscriptOperator, SubscriptOperator_);
+    LYNX_GENERATE_OPERATOR_ALIAS(PipeOperator, PipeOperator_);
 }
-}
+} // namespace EXOTIC::lynx
+} // namespace EXOTIC
 
-#endif // LINKLY_H
+#endif // EXOTIC_LYNX_H
